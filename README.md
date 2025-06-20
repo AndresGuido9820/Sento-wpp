@@ -229,127 +229,43 @@ El pipeline consta de las siguientes etapas:
 sento-whatsapp-bot/
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yml                # ARCHIVO CLAVE: Define tu pipeline de Integración Continua/Despliegue Continuo (CI/CD).
-│                                    # Automatiza desde las pruebas de código hasta el despliegue en AWS.
-│                                    # Incluye pasos para linting, tests, empaquetado, despliegue a staging,
-│                                    # pruebas de integración, APROBACIÓN MANUAL y despliegue a producción.
+│       └── ci-cd.yml                # Pipeline CI/CD automatizado con aprobación manual para producción
 │
-├── src/                             # CARPETA CLAVE: Aquí vive todo el código Python de tu aplicación.
-│   ├── common/                      # Código y utilidades COMPARTIDAS entre tus funciones Lambda.
-│   │   ├── __init__.py              # Hace que 'common' sea un paquete Python.
-│   │   ├── database/                # Configuración del ORM (SQLAlchemy) y modelos de base de datos.
-│   │   │   ├── __init__.py
-│   │   │   ├── connection.py        # CLAVE: Configura la conexión a Supabase (PostgreSQL) usando SQLAlchemy.
-│   │   │                            # Incluye manejo de errores para la conexión y sesiones de DB.
-│   │   │   └── models.py            # CLAVE: Define tus tablas de base de datos como CLASES PYTHON (modelos ORM).
-│   │   │                            # Aquí se mapean User, ClientCompany, Farm, Device, AlertRule, AlertEvent, UserFarmAccess.
-│   │   ├── schemas/                 # CLAVE: Modelos Pydantic para VALIDACIÓN y SERIALIZACIÓN de datos.
-│   │   │   ├── __init__.py
-│   │   │   ├── user.py              # Esquemas Pydantic para la entidad 'User' (cómo se ve un usuario al crearlo, leerlo, etc.).
-│   │   │   ├── device.py            # Esquemas Pydantic para la entidad 'Device'.
-│   │   │   ├── alert.py             # Esquemas Pydantic para 'AlertRule' y 'AlertEvent'.
-│   │   │   └── base.py              # Esquemas Pydantic base con campos comunes (ej. `created_at`, `updated_at`).
-│   │   ├── exceptions.py            # CLAVE: Definición de CLASES DE EXCEPCIONES PERSONALIZADAS.
-│   │   │                            # Esto permite un manejo de errores más específico y legible en tu código.
-│   │   ├── utils.py                 # Funciones de utilidad general (ej. validar la firma de Twilio, parsear mensajes).
-│   │   ├── constants.py             # Constantes que se usan en toda la aplicación (ej. nombres de comandos, mensajes fijos).
-│   │   └── config.py                # CLAVE: Módulo para CARGAR DE FORMA SEGURA las configuraciones y secretos.
-│   │                                # Usa `.env` en desarrollo local y AWS Secrets Manager en la nube.
+├── src/
+│   ├── common/                      # Código compartido entre Lambdas
+│   │   ├── database/                # ORM y modelos de base de datos
+│   │   ├── schemas/                 # Validación de datos con Pydantic  
+│   │   └── config.py                # Gestión centralizada de configuraciones
 │   │
-│   ├── command_processor/           # CARPETA CLAVE: Contiene el código de la FUNCIÓN LAMBDA 'CommandProcessor'.
-│   │   │                            # Esta Lambda maneja los mensajes entrantes de WhatsApp y los comandos de usuario.
-│   │   ├── __init__.py
-│   │   ├── app.py                   # CLAVE: El HANDLER PRINCIPAL de la Lambda. Es el punto de entrada de cada evento.
-│   │   │                            # Aquí se valida la entrada (Pydantic), se llama a los servicios y se manejan errores generales.
-│   │   ├── services/                # Lógica de NEGOCIO específica para procesar comandos.
-│   │   │   ├── __init__.py
-│   │   │   ├── user_service.py      # Lógica para gestionar usuarios (obtener, crear, validar rol).
-│   │   │   ├── device_service.py    # Lógica para interactuar con Ubidots y gestionar dispositivos.
-│   │   │   └── alert_config_service.py # Lógica para configurar y almacenar reglas de alerta.
-│   │   ├── repositories/            # Capa de ABSTRACCIÓN para interactuar con la base de datos a través del ORM.
-│   │   │   ├── __init__.py
-│   │   │   ├── user_repo.py         # Métodos CRUD (Crear, Leer, Actualizar, Borrar) para la tabla 'User'.
-│   │   │   └── alert_repo.py        # Métodos CRUD para las tablas de 'AlertRule' y 'AlertEvent'.
-│   │   ├── requirements.txt         # CLAVE: Dependencias Python ESPECÍFICAS para esta Lambda (Pydantic, SQLAlchemy, etc.).
-│   │   └── templates/               # (Opcional) Plantillas para mensajes complejos de WhatsApp (ej. menú dinámico).
-│   │       └── menu_messages.py
+│   ├── command_processor/           # Lambda para mensajes WhatsApp
+│   │   ├── app.py                   # Handler principal
+│   │   ├── services/                # Lógica de negocio
+│   │   └── repositories/            # Acceso a datos
 │   │
-│   ├── alert_handler/               # CARPETA CLAVE: Contiene el código de la FUNCIÓN LAMBDA 'AlertHandler'.
-│   │   │                            # Esta Lambda se encarga de procesar las alertas recibidas de Ubidots.
-│   │   ├── __init__.py
-│   │   ├── app.py                   # CLAVE: El HANDLER PRINCIPAL de esta Lambda. Procesa los eventos de alerta.
-│   │   │                            # Incluye validación, llamada a servicios y manejo de errores.
-│   │   ├── services/                # Lógica de NEGOCIO para manejar las alertas.
-│   │   │   ├── __init__.py
-│   │   │   └── notification_service.py # Lógica para enviar notificaciones a través de Twilio y consultar reglas de alerta.
-│   │   ├── repositories/            # Capa de ABSTRACCIÓN para la interacción con la base de datos para alertas.
-│   │   │   ├── __init__.py
-│   │   │   └── alert_repo.py        # Métodos CRUD para las tablas de 'AlertRule' y 'AlertEvent'.
-│   │   ├── requirements.txt         # Dependencias Python ESPECÍFICAS para esta Lambda.
+│   ├── alert_handler/               # Lambda para alertas Ubidots
+│   │   ├── app.py                   # Handler principal  
+│   │   ├── services/
+│   │   └── repositories/
 │   │
-│   └── tests/                       # CARPETA CLAVE: Todas las PRUEBAS de tu aplicación.
-│       ├── unit/                    # Pruebas UNITARIAS: Verifican componentes aislados (funciones, clases).
-│       │   ├── test_db_connection.py # Pruebas para la conexión a la base de datos.
-│       │   ├── test_schemas.py      # Pruebas para tus modelos Pydantic (validación de datos).
-│       │   ├── test_exceptions.py   # Pruebas para tus clases de excepción personalizadas.
-│       │   ├── test_utils.py        # Pruebas para las funciones de utilidad.
-│       │   └── command_processor/   # Pruebas unitarias para los servicios y repositorios del procesador de comandos.
-│       │   └── alert_handler/       # Pruebas unitarias para los servicios y repositorios del manejador de alertas.
-│       └── integration/             # Pruebas de INTEGRACIÓN: Verifican flujos completos y la interacción entre componentes.
-│           ├── test_e2e_whatsapp_flow.py # Simula un mensaje de WhatsApp y verifica toda la cadena hasta la respuesta.
-│           └── test_ubidots_alert_flow.py # Simula una alerta de Ubidots y verifica la notificación final.
+│   └── tests/                       # Suite de pruebas
+│       ├── unit/                    # Pruebas de componentes
+│       └── integration/             # Pruebas de flujos completos
 │
-├── terraform/                     
-│   │                                # Define cómo se construyen y configuran tus recursos en AWS.
-│   ├── environments/                # Configuración ESPECÍFICA para cada entorno de despliegue.
-│   │   ├── staging/                 # Entorno de pruebas (pre-producción).
-│   │   │   └── main.tf              # Recursos y configuraciones para el entorno de staging.
-│   │   │   └── variables.tf
-│   │   │   └── outputs.tf
-│   │   └── production/              
-│   │       └── main.tf              # Recursos y configuraciones para el entorno de producción.
-│   │                                # Aquí se pueden aplicar estrategias como Canary Deployments para despliegues seguros.
-│   │       └── variables.tf
-│   │       └── outputs.tf
+├── terraform/
+│   ├── environments/                # Configuración por entorno
+│   │   ├── staging/
+│   │   └── production/             
 │   │
-│   ├── modules/                     # MÓDULOS Terraform REUTILIZABLES.
-│   │                                # Cada módulo define un conjunto de recursos que puedes usar una y otra vez.
-│   │   ├── lambda/                  # Módulo para desplegar y configurar FUNCIONES LAMBDA.
-│   │   │   └── main.tf              # Define la función Lambda (memoria, runtime, rol IAM) y sus VARIABLES DE ENTORNO.
-│   │   │                            # También configura CloudWatch Logs y ALARMAS para la Lambda.
-│   │   │                            # ESPECIFICA EL ARCHIVO .ZIP DEL CÓDIGO A DESPLEGAR.
-│   │   ├── api_gateway/             # Módulo para configurar API GATEWAY.
-│   │   │   └── main.tf              # Define los ENDPOINTS HTTP (`/whatsapp`, `/alerts`), los métodos (POST),
-│   │   │                            # y cómo se INTEGRAN con tus funciones Lambda.
-│   │   ├── sqs/                     # Módulo para configurar colas SQS (si las usas directamente como recurso de Terraform).
-│   │   │   └── main.tf
-│   │   ├── secrets_manager/         # Módulo para almacenar SECRETOS en AWS Secrets Manager.
-│   │   │   └── main.tf              # CLAVE: Define cómo se crean los secretos (credenciales de Twilio, Ubidots, Supabase)
-│   │   │                            # y cómo tus Lambdas tienen permiso para ACCEDER A ELLOS.
-│   │   └── iam_roles/               # Módulo para definir ROLES y POLÍTICAS de IAM (manejo de permisos en AWS).
-│   │       └── main.tf              # Roles con los PERMISOS MÍNIMOS necesarios para tus Lambdas y API Gateway.
+│   ├── modules/                     # Componentes reutilizables
+│   │   ├── lambda/                  # Configuración Lambda
+│   │   ├── api_gateway/             # Endpoints REST  
+│   │   └── secrets_manager/         # Gestión de credenciales
 │   │
-│   └── main.tf                      # Archivo principal de Terraform para recursos GLOBALES/comunes.
-│   └── variables.tf                 # Variables globales compartidas por todos los entornos Terraform.
-│   └── outputs.tf                   # Salidas importantes del despliegue Terraform (ej. URLs de API Gateway).
-│   └── versions.tf                  # Define las versiones de los providers Terraform que usas.
+│   └── main.tf                      # Configuración global
 │
-├── diagrams/                        # Contiene todos los DIAGRAMAS VISUALES del proyecto.
-│   ├── architecture.png             # Diagrama de ARQUITECTURA de alto nivel.
-│   └── flow_interaction.png         # Diagrama de FLUJO de interacción de usuario y alertas.
-│   └── pipeline.png                 # Diagrama visual del pipeline CI/CD.
-│   └── erd.png                      # Diagrama Entidad-Relación de tu modelo de datos en Supabase.
-│
-├── docs/                            # Documentación ADICIONAL del proyecto.
-│   └── setup_guide.md               # Guía de configuración inicial para nuevos desarrolladores.
-│   └── api_spec.md                  # Especificaciones de las APIs externas que consumes (Twilio, Ubidots, Supabase).
-│   └── error_handling_guide.md      
-├── .env                             # CLAVE: ARCHIVO para VARIABLES DE ENTORNO LOCALES.
-│                                   
-│                                    # Contiene credenciales y configuraciones para tu desarrollo y pruebas locales.
-│                                    
-│
-├── .gitignore                       # Especifica archivos y carpetas que Git debe IGNORAR (ej. .env, logs, caché).
-├── README.md                     
-└── requirements-dev.txt         
+├── diagrams/                       
+├── docs/                            # Guías técnicas
+├── .env                             # Variables locales (gitignored)
+├── .gitignore
+└── README.md
  ```` 
