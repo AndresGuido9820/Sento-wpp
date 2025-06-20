@@ -1,6 +1,3 @@
-# Sento IoT Bot: Integración WhatsApp y Dispositivos IoT
-
-Este repositorio contiene la implementación del bot IoT de Sento, una solución que permite a los usuarios interactuar con dispositivos IoT a través de WhatsApp, procesar opciones de menú y recibir alertas automáticas.
 
 ## 1. Contexto del Proyecto
 
@@ -13,10 +10,10 @@ El **por qué** de esta solución radica en la necesidad de democratizar el acce
 Con este bot, **se busca obtener**:
 * **Monitoreo en Tiempo Real y de Fácil Acceso**: Los usuarios podrán consultar el estado actual de sus dispositivos IoT, como la temperatura o la humedad, directamente desde WhatsApp, sin necesidad de iniciar sesión en Ubidots.
 * **Alertas Personalizadas y Oportunas**: Configuración de reglas de alerta personalizadas y recepción de notificaciones inmediatas cuando los valores de los sensores superen o caigan por debajo de los umbrales definidos, complementando o mejorando el sistema de alertas existente en Ubidots para el usuario final.
-* **Acceso Sencillo y Flexible**: Ofrecer una interfaz de usuario familiar y fácil de usar, permitiendo la interacción mediante un menú interactivo numerado o, para usuarios avanzados, mediante comandos textuales.
-* **Optimización de Operaciones**: Reducir los tiempos de respuesta ante anomalías y mejorar la eficiencia en la gestión de las granjas o instalaciones monitorizadas, al proporcionar información crítica de forma directa y proactiva a los responsables.
+* **Acceso Sencillo y Flexible**: Ofrecer una interfaz de usuario familiar y fácil de usar, permitiendo la interacción mediante un menú interactivo numerado. Que permiten el acceso a información y configuración de alertas
 
-La **solución** propuesta es un bot IoT que integra WhatsApp con dispositivos IoT a través de una arquitectura serverless, escalable y de bajo costo. Utiliza servicios de AWS (API Gateway, Lambda, SQS, DynamoDB, Secrets Manager) e integraciones con APIs externas como Twilio (para la comunicación por WhatsApp) y Ubidots (para la gestión de datos de sensores y el disparo de eventos). Este enfoque garantiza un flujo de datos optimizado y una experiencia de usuario fluida, desde la interacción inicial con un menú interactivo hasta el manejo eficiente de alertas críticas, actuando como una capa de acceso simplificado a la información ya existente en Ubidots.
+
+La **solución** propuesta es una automatización integra WhatsApp con dispositivos IoT a través de una arquitectura serverless, escalable y de bajo costo. Utiliza servicios de AWS (API Gateway, Lambda, SQS, DynamoDB, Secrets Manager) e integraciones con APIs externas como Twilio (para la comunicación por WhatsApp) y Ubidots (para la gestión de datos de sensores y el disparo de eventos). Este enfoque garantiza un flujo de datos optimizado y una experiencia de usuario fluida, desde la interacción inicial con un menú interactivo hasta el manejo eficiente de alertas críticas, actuando como una capa de acceso simplificado a la información ya existente en Ubidots.
 
 ## 2. Arquitectura de Alto Nivel
 
@@ -26,8 +23,7 @@ La arquitectura del bot se basa en un enfoque serverless en AWS, optimizada para
 * **AWS API Gateway**: Actúa como el punto de entrada para las interacciones de WhatsApp (`/whatsapp`) y las alertas de Ubidots (`/alerts`).
 * **AWS Lambda**:
     * `CommandProcessor`: Procesa las opciones seleccionadas por el usuario, interactúa con Ubidots para obtener datos y genera las respuestas.
-    * `AlertHandler`: Procesa las alertas recibidas de Ubidots a través de una cola SQS y envía notificaciones a los usuarios vía Twilio.
-* **Amazon SQS (`AlertQueue`)**: Almacena las alertas de forma asíncrona para asegurar que no se pierdan y sean procesadas de manera confiable.
+    * `AlertHandler`: Procesa las alertas recibidas de Ubidots y envía notificaciones a los usuarios vía Twilio.
 * **Amazon DynamoDB**: Base de datos NoSQL que almacena información crítica como datos de usuarios, reglas de alertas y detalles de dispositivos.
 * **AWS Secrets Manager**: Almacena de forma segura credenciales sensibles, como los tokens de autenticación para Ubidots y Twilio.
 * **Ubidots**: Plataforma IoT utilizada para almacenar datos de sensores y configurar eventos que disparan alertas.
@@ -39,16 +35,16 @@ Para una representación visual detallada, consulte el `diagrams/architecture.pn
 1.  Cuando un usuario inicia un chat con el número de WhatsApp de Sento, recibe un menú interactivo con opciones numeradas (ej., "1. Estado actual", "2. Máximo histórico", "3. Configurar alerta").
 2.  Al seleccionar una opción (ej., "1"), Twilio envía esta elección al endpoint `/whatsapp` en API Gateway de AWS.
 3.  El `CommandProcessor` (Lambda) verifica la autenticidad del mensaje mediante la firma de Twilio y valida los permisos del usuario en DynamoDB.
-4.  Para consultas de estado, el sistema recupera los datos de Ubidots (usando credenciales seguras de Secrets Manager) y muestra respuestas claras como "🌡️ Temperatura: 23.5°C".
-5.  Si el usuario configura una alerta (ej., "3"), el sistema guarda la regla en DynamoDB y programa notificaciones en Ubidots.
+4.  Para consultas de estado, el sistema recupera los datos de Ubidots (usando credenciales seguras de Secrets Manager) y muestra respuestas claras como "Temperatura: 23.5°C".
+5.  Si el usuario configura una alerta el sistema guarda la regla en DynamoDB y programa notificaciones en Ubidots.
 6.  La respuesta se envía de vuelta al usuario a través de Twilio WhatsApp API.
 
 ### Flujo de Interacción: Alertas de Ubidots
 
 1.  Cuando Ubidots detecta un valor fuera de rango (ej., temperatura > 25°C), envía una notificación al endpoint `/alerts`.
-2.  API Gateway deriva esta alerta a una cola SQS (`AlertQueue`) para garantizar su procesamiento.
-3.  El `AlertHandler` (Lambda) consume la alerta, verifica la regla en DynamoDB y envía un mensaje claro al usuario vía Twilio, como "🚨 Alerta: Temperatura = 26.5°C (Límite: 25°C)".
-4.  Todo el proceso, desde la detección hasta la notificación, ocurre en menos de un segundo, con un costo mínimo gracias a la arquitectura serverless y sin perder alertas gracias a SQS.
+2.  API Gateway deriva esta alertaalert handler.
+3.  El `AlertHandler` (Lambda) consume la alerta, verifica la regla en DynamoDB y envía un mensaje claro al usuario vía Twilio, como "Alerta: Temperatura = 26.5°C (Límite: 25°C)".
+4.  Todo el proceso, desde la detección hasta la notificación, con un costo mínimo gracias a la arquitectura serverless.
 
 Este proceso está diseñado para ser rápido y eficiente en costos. Los usuarios pueden interactuar tanto con comandos textuales (ej: "/status farm-001") como con el menú numerado, asegurando flexibilidad y facilidad de uso.
 
