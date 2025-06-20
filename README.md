@@ -2,7 +2,7 @@
 
 Sento se dedica a proporcionar soluciones innovadoras para la gestión y monitoreo de dispositivos IoT en diversos sectores, simplificando la interacción con la tecnología para nuestros clientes. Este proyecto aborda la necesidad de un acceso más fácil y en tiempo real a los datos de sensores IoT para operarios de campo y dueños de granjas, complementando sus sistemas de monitoreo existentes como Ubidots.
 
-Buscamos democratizar el acceso a información crucial de IoT, permitiendo a los usuarios interactuar de manera intuitiva y recibir alertas proactivas directamente a través de WhatsApp.
+Buscamos optimizar el acceso a información crucial de IoT, permitiendo a los usuarios interactuar de manera intuitiva y recibir alertas proactivas directamente a través de WhatsApp.
 
 ---
 
