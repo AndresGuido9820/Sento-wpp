@@ -174,6 +174,199 @@ El pipeline consta de las siguientes etapas:
     * **Tecnología**: CloudWatch Alarms + GitHub Actions.
     * **Función**: Si CloudWatch detecta un aumento de errores (>5% por 5 minutos), revierte automáticamente a la versión estable.
     * **Importancia**: Mitiga impactos críticos sin intervención manual.
+  
+
+**Código pipeline**
+````
+name: Sento CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "develop" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.5.0
+  PYTHON_VERSION: 3.9
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 pytest pytest-cov
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Lint with flake8
+        run: |
+          flake8 src/ --count --show-source --statistics --max-line-length=120
+
+      - name: Run unit tests
+        run: |
+          pytest src/tests/unit/ -v --cov=src --cov-report=xml
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY_STAGING }}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: false
+
+  package:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    outputs:
+      lambda_zip: ${{ steps.package-lambda.outputs.lambda_zip }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Package Lambda functions
+        id: package-lambda
+        run: |
+          cd src/command_processor/
+          zip -r ../../command_processor.zip .
+          cd ../alert_handler/
+          zip -r ../../alert_handler.zip .
+          echo "lambda_zip=command_processor.zip,alert_handler.zip" >> $GITHUB_OUTPUT
+
+  deploy-staging:
+    needs: package
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_STAGING }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init -backend-config="environments/staging/backend.tfvars"
+
+      - name: Terraform Plan
+        run: terraform plan -var-file="environments/staging/variables.tfvars"
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -var-file="environments/staging/variables.tfvars"
+
+  integration-tests:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run integration tests
+        run: |
+          pytest src/tests/integration/ -v
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          UBIDOTS_TOKEN: ${{ secrets.UBIDOTS_TOKEN_STAGING }}
+
+  deploy-production:
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init -backend-config="environments/production/backend.tfvars"
+
+      - name: Terraform Plan
+        run: terraform plan -var-file="environments/production/variables.tfvars"
+
+      - name: Manual Approval
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.token }}
+
+      - name: Terraform Apply (Canary)
+        run: |
+          terraform apply -auto-approve -var-file="environments/production/variables.tfvars" \
+            -var="lambda_traffic_percentage=10"
+          
+          sleep 900  # Espera 15 minutos para monitoreo
+          
+          terraform apply -auto-approve -var-file="environments/production/variables.tfvars" \
+            -var="lambda_traffic_percentage=100"
+
+      - name: Notify Slack on Success
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL }}
+          slack-message: "✅ Despliegue en producción completado: ${{ github.repository }}@${{ github.sha }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  rollback:
+    if: failure() && needs.deploy-production.result == 'failure'
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Rollback Lambda to Previous Version
+        run: |
+          aws lambda update-alias \
+            --function-name sento-alert-handler \
+            --name PROD \
+            --function-version $(aws lambda list-versions-by-function \
+              --function-name sento-alert-handler \
+              --query "Versions[-2].Version" --output text)
+
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL }}
+          slack-message: "⚠️ Rollback ejecutado por fallos en producción: ${{ github.repository }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+````
 
 **Diagrama del Pipeline CI/CD:**
 ![Pipeline](https://raw.githubusercontent.com/AndresGuido9820/Sento-wpp/3aa4a05cc5cb22e5036cb8b8dc3c5e44c7988078/Diagrams/Pipeline.png)
