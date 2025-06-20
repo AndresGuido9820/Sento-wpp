@@ -54,7 +54,7 @@ Este proceso está diseñado para ser rápido y eficiente en costos. Los usuario
 
 
 **Diagrama de Arquitectura de Alto Nivel:**
-![Diagrama de Arquitectura](https://raw.githubusercontent.com/AndresGuido9820/Sento-wpp/3a32eda53cf8379bb78ed82cf66fef0ae982d5e0/Diagrams/Captura%20de%20pantalla%202025-06-20%20104656.png)
+![Diagrama de Arquitectura](https://github.com/AndresGuido9820/Sento-wpp/blob/18e8282766f6ef006d04e924f8ce776f1d3d57d1/Diagrams/Arquitectura-sup.png)
 
 
 ## 3. Modelo de Datos
