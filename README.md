@@ -49,7 +49,8 @@ Para una representación visual detallada, consulte el `diagrams/architecture.pn
 Este proceso está diseñado para ser rápido y eficiente en costos. Los usuarios pueden interactuar tanto con comandos textuales (ej: "/status farm-001") como con el menú numerado, asegurando flexibilidad y facilidad de uso.
 
 **Diagrama de Arquitectura de Alto Nivel:**
-(Pegar aquí el diagrama `diagrams/architecture.png`)
+![Diagrama de Arquitectura](https://raw.githubusercontent.com/AndresGuido9820/Sento-wpp/3a32eda53cf8379bb78ed82cf66fef0ae982d5e0/Diagrams/Captura%20de%20pantalla%202025-06-20%20104656.png)
+
 
 ## 3. Modelo de Datos
 
@@ -99,8 +100,9 @@ El modelo de datos cumple con la Tercera Forma Normal (3FN):
 * 2FN: Atributos no clave dependen completamente de la PK.
 * 3FN: No hay dependencias transitivas.
 
-**Diagrama del Modelo de Datos:**
-(Pegar aquí el diagrama `diagrams/data_model.png`)
+**Diagrama Entidad Relación:**
+![Diagrama de Arquitectura](https://raw.githubusercontent.com/AndresGuido9820/Sento-wpp/90fd49b1c57ccb242a4ee6f508ce4f20c2f6b34f/Diagrams/Captura%20de%20pantalla%202025-06-20%20105406.png)
+
 
 ## 4. Roles y Permisos
 
