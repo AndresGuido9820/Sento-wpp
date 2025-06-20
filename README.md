@@ -164,7 +164,8 @@ El pipeline consta de las siguientes etapas:
     * **Importancia**: Mitiga impactos críticos sin intervención manual.
 
 **Diagrama del Pipeline CI/CD:**
-(Pegar aquí el diagrama `diagrams/ci_cd_pipeline.png`)
+![Pipeline](https://raw.githubusercontent.com/AndresGuido9820/Sento-wpp/3aa4a05cc5cb22e5036cb8b8dc3c5e44c7988078/Diagrams/Pipeline.png)
+
 
 ## 6. Supuestos y Decisiones de Diseño
 
