@@ -101,7 +101,8 @@ El modelo de datos cumple con la Tercera Forma Normal (3FN):
 * 3FN: No hay dependencias transitivas.
 
 **Diagrama Entidad Relación:**
-(Pegar aquí el diagrama `diagrams/data_model.png`)
+![Diagrama de Arquitectura](https://raw.githubusercontent.com/AndresGuido9820/Sento-wpp/90fd49b1c57ccb242a4ee6f508ce4f20c2f6b34f/Diagrams/Captura%20de%20pantalla%202025-06-20%20105406.png)
+
 
 ## 4. Roles y Permisos
 
