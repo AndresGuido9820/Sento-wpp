@@ -35,7 +35,7 @@ La arquitectura del bot se basa en un enfoque serverless en AWS, optimizada para
 * **AWS Secrets Manager**: Almacena de forma segura credenciales sensibles para Ubidots, Twilio y Supabase.
 * **Ubidots**: Plataforma IoT para almacenar datos de sensores y configurar eventos que disparan alertas.
 
-Para una representación visual detallada, consulte el `diagrams/architecture.png`.
+
 
 ### Flujo de Interacción: Opciones de Menú y Comandos de Usuario
 
