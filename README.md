@@ -220,6 +220,95 @@ El pipeline consta de las siguientes etapas:
 * **Rollback Automático con CloudWatch Alarms**:
     * **Ventajas**: Proporciona una capa adicional de seguridad, revirtiendo automáticamente a una versión estable si las métricas de monitoreo detectan anomalías, reduciendo el tiempo de inactividad.
     * **Alternativas Consideradas**: Rollback manual. **Razón del descarte**: La automatización mejora la resiliencia y la capacidad de respuesta ante incidentes.
+## Tabla con costos 
+# Desglose de Costos de Servicios
+
+A continuación se presenta una tabla detallada con los costos asociados a los diferentes servicios utilizados.
+
+## Comunicaciones y APIs
+
+### Twilio
+
+| Servicio | Costo por Unidad | Unidad de Facturación | Nivel Gratuito (Mensual) | Notas Clave |
+| :--- | :--- | :--- | :--- | :--- |
+| **WhatsApp Business API** | $0.005 (adicional) | Por mensaje | N/A | Cargo adicional sobre las tarifas por conversación de Meta. |
+| **SMS y MMS** | $0.0083 | Por mensaje | N/A | Envío y recepción. |
+| **Voice API (recibir)** | $0.0085 | Por minuto | N/A | |
+| **Voice API (hacer)** | $0.014 | Por minuto | N/A | |
+| **Functions** | $0.0001 | Por invocación | 10,000 invocaciones | |
+
+
+
+---
+
+
+
+---
+
+## Base de Datos y Backend
+
+### Supabase
+
+| Plan | Costo Mensual | Base de Datos | Usuarios Activos Mensuales (MAU) | Ancho de Banda | Almacenamiento | Notas |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Plan Gratuito** | $0 | 500 MB | 50,000 | 5 GB | 1 GB | |
+| **Plan Pro** | Desde $25 | 8 GB ($0.125/GB extra) | 100,000 ($0.00325/MAU extra) | 250 GB ($0.09/GB extra) | 100 GB ($0.021/GB extra) | Incluye $10 en créditos de cómputo. |
+| **Instancia Micro (Cómputo)** | $10 | N/A | N/A | N/A | N/A | 2 núcleos ARM, 1 GB de memoria. Cubierto por créditos en planes de pago. |
+
+---
+
+## Servicios en la Nube (AWS)
+
+### AWS Lambda
+
+| Concepto | Costo | Nivel Gratuito (Mensual) | Notas |
+| :--- | :--- | :--- | :--- |
+| **Solicitudes** | $0.20 / 1M de solicitudes | 1 millón de solicitudes | |
+| **Duración (x86)** | $0.0000166667 / GB-segundo | 400,000 GB-segundos (agregado) | |
+| **Duración (Arm)** | $0.0000133334 / GB-segundo | 400,000 GB-segundos (agregado) | Hasta 34% mejor rendimiento/precio. |
+| **Lambda@Edge Solicitudes** | $0.60 / 1M de solicitudes | N/A | |
+
+### AWS API Gateway
+
+| Tipo de API | Costo (por 1 millón) | Nivel Gratuito (12 meses) | Notas |
+| :--- | :--- | :--- | :--- |
+| **HTTP API Calls** | $1.00 | 1 millón de llamadas | Hasta 71% más barato que REST APIs. |
+| **REST API Calls**| $3.50 | 1 millón de llamadas | |
+| **WebSocket Messages** | $1.00 | 1 millón de mensajes | Mensajes medidos en incrementos de 32 KB. |
+
+### Amazon SQS
+
+| Tipo de Cola | Costo (por 1 millón de solicitudes) | Nivel Gratuito (Indefinido) | Notas |
+| :--- | :--- | :--- | :--- |
+| **Estándar** | $0.40 | 1 millón de solicitudes | Cada 64 KB de carga útil es 1 solicitud. |
+| **FIFO** | $0.50 | 1 millón de solicitudes | Cada 64 KB de carga útil es 1 solicitud. |
+
+### AWS Secrets Manager
+
+| Concepto | Costo | Nivel Gratuito | Notas |
+| :--- | :--- | :--- | :--- |
+| **Por Secreto** | $0.40 / secreto / mes | Prueba gratuita de 30 días | Los secretos de réplica se facturan aparte. |
+| **Llamadas a la API** | $0.05 / 10,000 llamadas | N/A | |
+
+
+
+---
+
+## CI/CD y Almacenamiento
+
+### GitHub Actions
+
+| Ejecutor | Costo por Minuto | Minutos Gratuitos (Plan Free) | Notas |
+| :--- | :--- | :--- | :--- |
+| **Linux 2-core** | $0.008 | 2,000 | Uso gratuito para repositorios públicos. |
+| **Windows 2-core**| $0.016 | 2,000 | Multiplicador 2x de minutos. |
+| **macOS 3/4-core**| $0.08 | 2,000 | Multiplicador 10x de minutos. |
+
+| Concepto | Costo | Almacenamiento Gratuito (Plan Free) |
+| :--- | :--- | :--- |
+| **Almacenamiento (sobreuso)** | $0.008 / GB / día | 500 MB |
+
+
 
 ---
 
