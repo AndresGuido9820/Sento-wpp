@@ -48,6 +48,11 @@ Para una representación visual detallada, consulte el `diagrams/architecture.pn
 
 Este proceso está diseñado para ser rápido y eficiente en costos. Los usuarios pueden interactuar tanto con comandos textuales (ej: "/status farm-001") como con el menú numerado, asegurando flexibilidad y facilidad de uso.
 
+**Diagrama de interacción de flujo:**
+![Diagrama de Interacción de Flujo](https://raw.githubusercontent.com/AndresGuido9820/Sento-wpp/f70380684a2294a5edc2f9655fa21a9a7aee5093/Diagrams/Diagrama%20interacci%C3%B3n%20de%20flujo.png)
+
+
+
 **Diagrama de Arquitectura de Alto Nivel:**
 ![Diagrama de Arquitectura](https://raw.githubusercontent.com/AndresGuido9820/Sento-wpp/3a32eda53cf8379bb78ed82cf66fef0ae982d5e0/Diagrams/Captura%20de%20pantalla%202025-06-20%20104656.png)
 
